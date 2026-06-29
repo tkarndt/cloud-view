@@ -219,3 +219,7 @@ __marimo__/
 
 # IntelliJ
 .idea/
+
+# Dependency directories
+frontend/node_modules/
+jspm_packages/

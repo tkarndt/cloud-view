@@ -17,6 +17,7 @@
 - setup black in the ci tool chain to enforce code formatting.
 - setup flake8 in the ci tool chain to enforce code linting.
 - setup mypy in the ci tool chain to enforce type checking.
+- for webservers use fastapi and ensure openapi specifications are available  
 - add an easy-to-use single command setup script for developers to install all dependencies with uv
 
 ## For frontend tasks:

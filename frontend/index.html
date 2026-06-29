@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Cloud View – Collaborative Point Cloud Viewer</title>
+
+    <!-- Potree styles (loaded from /potree/ which maps to the cloned Potree repo) -->
+    <link rel="stylesheet" href="/potree/build/potree/potree.css">
+    <link rel="stylesheet" href="/potree/libs/jquery-ui/jquery-ui.min.css">
+    <link rel="stylesheet" href="/potree/libs/spectrum/spectrum.min.css">
+    <link rel="stylesheet" href="/potree/libs/jstree/themes/mixed/style.min.css">
+
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+        }
+        .potree_container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="potree_container">
+        <div id="potree_render_area"></div>
+        <div id="potree_sidebar_container"></div>
+    </div>
+
+    <!--
+        Potree and its runtime dependencies.
+        These are synchronous scripts so window.Potree is set before our
+        ES module (below) executes.
+    -->
+    <script src="/potree/libs/jquery/jquery-3.1.1.min.js"></script>
+    <script src="/potree/libs/spectrum/spectrum.min.js"></script>
+    <script src="/potree/libs/jquery-ui/jquery-ui.min.js"></script>
+    <script src="/potree/libs/other/BinaryHeap.js"></script>
+    <script src="/potree/libs/tween/tween.min.js"></script>
+    <script src="/potree/libs/d3/d3.js"></script>
+    <script src="/potree/libs/proj4/proj4.js"></script>
+    <script src="/potree/libs/i18n/i18n.js"></script>
+    <script src="/potree/libs/jstree/jstree.js"></script>
+    <script src="/potree/build/potree/potree.js"></script>
+
+    <!-- Our compiled TypeScript application (Vite replaces this path on build) -->
+    <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
