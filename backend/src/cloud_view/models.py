@@ -8,14 +8,14 @@ from pydantic import BaseModel
 
 
 class CameraState(BaseModel):
-    """Camera position and look-at target in world coordinates."""
+    """Camera position and normalised view direction in world coordinates."""
 
     position_x: float
     position_y: float
     position_z: float
-    target_x: float
-    target_y: float
-    target_z: float
+    direction_x: float
+    direction_y: float
+    direction_z: float
 
 
 class CameraUpdateMessage(BaseModel):

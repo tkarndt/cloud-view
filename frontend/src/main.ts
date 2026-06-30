@@ -15,28 +15,15 @@ import type { CameraState } from "./types.js";
 
 const COPC_URL = "https://s3.amazonaws.com/hobu-lidar/sofi.copc.laz";
 
-/**
- * Compute the orbit pivot (look-at target) from Potree's camera view.
- *
- * Potree's OrbitControls positions the camera at:
- *   camera = pivot + [r·sin(yaw)·cos(pitch), r·sin(pitch), r·cos(yaw)·cos(pitch)]
- *
- * Rearranging: pivot = camera - offset
- */
-function getPotreeTarget(view: PotreeView): THREE.Vector3 {
-    const { radius, pitch, yaw } = view;
-    return new THREE.Vector3().addVectors(view.position, view.direction);
-}
-
+/** Read camera state directly from Potree's view object. */
 function readCameraState(view: PotreeView): CameraState {
-    const target = getPotreeTarget(view);
     return {
         position_x: view.position.x,
         position_y: view.position.y,
         position_z: view.position.z,
-        target_x: target.x,
-        target_y: target.y,
-        target_z: target.z,
+        direction_x: view.direction.x,
+        direction_y: view.direction.y,
+        direction_z: view.direction.z,
     };
 }
 

@@ -12,3 +12,4 @@ Use python for the Real-time sync layer. Show me the implementation plan first.
       init main.ts:86
       <anonymous> main.ts:109
   EptLoader.js:24:28
+6. in potree the view has the position and direction properties which are also used to update the peers visual. Using position and target as a data model is the wrong choice. Adapt all interfaces in backend and frontend to use position and direction instead

@@ -36,9 +36,9 @@ def state() -> CameraState:
         position_x=100.0,
         position_y=200.0,
         position_z=50.0,
-        target_x=110.0,
-        target_y=205.0,
-        target_z=45.0,
+        direction_x=0.0,
+        direction_y=0.0,
+        direction_z=-1.0,
     )
 
 

@@ -1,11 +1,11 @@
-/** Camera position and look-at target in the point cloud's world coordinates. */
+/** Camera position and normalised view direction in world coordinates. */
 export interface CameraState {
     position_x: number;
     position_y: number;
     position_z: number;
-    target_x: number;
-    target_y: number;
-    target_z: number;
+    direction_x: number;
+    direction_y: number;
+    direction_z: number;
 }
 
 /** Union of all message types the server can send. */

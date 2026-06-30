@@ -39,12 +39,15 @@ export class PeerRenderer {
      * Create or update the view-cone visual for a peer.
      *
      * @param peerId Stable peer identifier.
-     * @param state  Current camera position and look-at target.
+     * @param state  Current camera position and normalised view direction.
      */
     updatePeer(peerId: string, state: CameraState): void {
         const position = new THREE.Vector3(state.position_x, state.position_y, state.position_z);
-        const target = new THREE.Vector3(state.target_x, state.target_y, state.target_z);
-        const direction = new THREE.Vector3().subVectors(target, position).normalize();
+        const direction = new THREE.Vector3(
+            state.direction_x,
+            state.direction_y,
+            state.direction_z,
+        );
 
         const arrowLength = 100;
 

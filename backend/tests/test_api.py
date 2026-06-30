@@ -58,9 +58,9 @@ def test_second_joiner_receives_existing_peers() -> None:
                             "position_x": 1.0,
                             "position_y": 2.0,
                             "position_z": 3.0,
-                            "target_x": 4.0,
-                            "target_y": 5.0,
-                            "target_z": 6.0,
+                            "direction_x": 4.0,
+                            "direction_y": 5.0,
+                            "direction_z": 6.0,
                         },
                     }
                 )
@@ -91,9 +91,9 @@ def test_camera_update_relayed_to_second_client() -> None:
                                 "position_x": 10.0,
                                 "position_y": 20.0,
                                 "position_z": 30.0,
-                                "target_x": 15.0,
-                                "target_y": 25.0,
-                                "target_z": 35.0,
+                                "direction_x": 15.0,
+                                "direction_y": 25.0,
+                                "direction_z": 35.0,
                             },
                         }
                     )
@@ -121,9 +121,9 @@ def test_invalid_message_does_not_close_connection() -> None:
                             "position_x": 0.0,
                             "position_y": 0.0,
                             "position_z": 0.0,
-                            "target_x": 1.0,
-                            "target_y": 0.0,
-                            "target_z": 0.0,
+                            "direction_x": 1.0,
+                            "direction_y": 0.0,
+                            "direction_z": 0.0,
                         },
                     }
                 )
