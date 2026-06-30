@@ -8,6 +8,8 @@
 interface PotreeView {
     /** Camera position in world space (THREE.Vector3). */
     readonly position: { x: number; y: number; z: number };
+    /** Camera direction in world space (THREE.Vector3). */
+    direction: { x: number; y: number; z: number };
     /** Vertical angle in radians (elevation). */
     pitch: number;
     /** Horizontal angle in radians (azimuth). */

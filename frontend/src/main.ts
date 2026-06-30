@@ -25,11 +25,7 @@ const COPC_URL = "https://s3.amazonaws.com/hobu-lidar/sofi.copc.laz";
  */
 function getPotreeTarget(view: PotreeView): THREE.Vector3 {
     const { radius, pitch, yaw } = view;
-    return new THREE.Vector3(
-        view.position.x - radius * Math.sin(yaw) * Math.cos(pitch),
-        view.position.y - radius * Math.sin(pitch),
-        view.position.z - radius * Math.cos(yaw) * Math.cos(pitch),
-    );
+    return new THREE.Vector3().addVectors(view.position, view.direction);
 }
 
 function readCameraState(view: PotreeView): CameraState {
