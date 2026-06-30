@@ -8,7 +8,7 @@
     <!-- Potree styles (loaded from /potree/ which maps to the cloned Potree repo) -->
     <link rel="stylesheet" href="/potree/build/potree/potree.css">
     <link rel="stylesheet" href="/potree/libs/jquery-ui/jquery-ui.min.css">
-    <link rel="stylesheet" href="/potree/libs/spectrum/spectrum.min.css">
+    <link rel="stylesheet" href="/potree/libs/spectrum/spectrum.css">
     <link rel="stylesheet" href="/potree/libs/jstree/themes/mixed/style.min.css">
 
     <style>
@@ -24,6 +24,106 @@
             width: 100%;
             height: 100%;
         }
+
+        /* ── Loading overlay (phase 1: metadata fetch) ──────────────────────── */
+        #loading-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(5, 10, 20, 0.93);
+            backdrop-filter: blur(6px);
+            color: #d8e0ee;
+            font-family: system-ui, -apple-system, sans-serif;
+            transition: opacity 0.5s ease;
+        }
+        .loading-content {
+            text-align: center;
+            max-width: 380px;
+            padding: 2rem;
+        }
+        .loading-spinner {
+            width: 52px;
+            height: 52px;
+            border: 4px solid rgba(255, 255, 255, 0.12);
+            border-top-color: #4488ff;
+            border-radius: 50%;
+            animation: cv-spin 0.85s linear infinite;
+            margin: 0 auto 1.75rem;
+        }
+        .loading-title {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin: 0 0 0.2rem;
+            color: #fff;
+            letter-spacing: -0.02em;
+        }
+        .loading-subtitle {
+            font-size: 0.85rem;
+            color: #6a7890;
+            margin: 0 0 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        #loading-status {
+            font-size: 0.95rem;
+            color: #9aaabb;
+            margin: 0 0 1.25rem;
+            min-height: 1.4rem;
+        }
+        .loading-hint {
+            font-size: 0.78rem;
+            color: #445060;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        /* ── Tile-streaming pill (phase 2: background tile loads) ───────────── */
+        #tile-progress {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 500;
+            display: none;           /* shown by JS */
+            align-items: center;
+            gap: 9px;
+            background: rgba(8, 14, 24, 0.88);
+            border: 1px solid rgba(68, 136, 255, 0.25);
+            color: #9aaabb;
+            padding: 7px 18px 7px 14px;
+            border-radius: 999px;
+            font-size: 0.82rem;
+            font-family: system-ui, -apple-system, sans-serif;
+            backdrop-filter: blur(10px);
+            transition: opacity 0.5s ease;
+            white-space: nowrap;
+        }
+        .tile-spinner {
+            width: 13px;
+            height: 13px;
+            border: 2px solid rgba(255, 255, 255, 0.12);
+            border-top-color: #4488ff;
+            border-radius: 50%;
+            animation: cv-spin 0.85s linear infinite;
+            flex-shrink: 0;
+        }
+        #tile-progress[data-state="ready"] .tile-spinner {
+            border-top-color: #44cc88;
+            animation: none;
+        }
+        #tile-progress[data-state="ready"] #tile-label {
+            color: #44cc88;
+        }
+        #tile-count {
+            font-variant-numeric: tabular-nums;
+        }
+
+        @keyframes cv-spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -32,20 +132,42 @@
         <div id="potree_sidebar_container"></div>
     </div>
 
+    <!-- Phase 1: full-screen overlay while COPC metadata loads -->
+    <div id="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <p class="loading-title">SoFi Stadium</p>
+            <p class="loading-subtitle">Collaborative Point Cloud Viewer</p>
+            <p id="loading-status">Fetching point cloud metadata…</p>
+            <p class="loading-hint">
+                The ~2 GB COPC file streams tile-by-tile from S3.<br>
+                Initial load may take 30–60 s depending on connection speed.
+            </p>
+        </div>
+    </div>
+
+    <!-- Phase 2: compact pill during background tile streaming -->
+    <div id="tile-progress">
+        <div class="tile-spinner"></div>
+        <span id="tile-label">Streaming tiles</span>
+        <span id="tile-count"></span>
+    </div>
+
     <!--
         Potree and its runtime dependencies.
         These are synchronous scripts so window.Potree is set before our
         ES module (below) executes.
     -->
     <script src="/potree/libs/jquery/jquery-3.1.1.min.js"></script>
-    <script src="/potree/libs/spectrum/spectrum.min.js"></script>
+    <script src="/potree/libs/spectrum/spectrum.js"></script>
     <script src="/potree/libs/jquery-ui/jquery-ui.min.js"></script>
     <script src="/potree/libs/other/BinaryHeap.js"></script>
     <script src="/potree/libs/tween/tween.min.js"></script>
     <script src="/potree/libs/d3/d3.js"></script>
     <script src="/potree/libs/proj4/proj4.js"></script>
-    <script src="/potree/libs/i18n/i18n.js"></script>
+    <script src="/potree/libs/i18next/i18next.js"></script>
     <script src="/potree/libs/jstree/jstree.js"></script>
+    <script src="/potree/libs/copc/index.js"></script>
     <script src="/potree/build/potree/potree.js"></script>
 
     <!-- Our compiled TypeScript application (Vite replaces this path on build) -->

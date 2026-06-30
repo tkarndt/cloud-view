@@ -30,8 +30,9 @@ if [ ! -f "build/potree/potree.js" ]; then
 fi
 
 echo "Copying files to $DEST..."
-mkdir -p "$(git -C "$OLDPWD" rev-parse --show-toplevel)/$DEST"
-cp -r build/potree "$(git -C "$OLDPWD" rev-parse --show-toplevel)/$DEST/build/potree"
-cp -r libs         "$(git -C "$OLDPWD" rev-parse --show-toplevel)/$DEST/libs"
+REPO_ROOT="$(git -C "$OLDPWD" rev-parse --show-toplevel)"
+mkdir -p "$REPO_ROOT/$DEST/build"
+cp -r build/potree "$REPO_ROOT/$DEST/build/potree"
+cp -r libs         "$REPO_ROOT/$DEST/libs"
 
 echo "Done. Potree is ready at $DEST/"

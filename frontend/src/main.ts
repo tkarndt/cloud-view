@@ -8,6 +8,7 @@
  */
 
 import * as THREE from "three";
+import { LoadingProgress } from "./loading-progress.js";
 import { PeerRenderer } from "./peer-renderer.js";
 import { SyncClient } from "./sync-client.js";
 import type { CameraState } from "./types.js";
@@ -44,6 +45,9 @@ function readCameraState(view: PotreeView): CameraState {
 }
 
 function init(): void {
+    const progress = new LoadingProgress();
+    progress.startMetadataPhase();
+
     const renderArea = document.getElementById("potree_render_area");
     if (!renderArea) {
         throw new Error("#potree_render_area not found in DOM");
@@ -78,6 +82,7 @@ function init(): void {
     sync.connect();
 
     // --- Load point cloud ---
+    progress.setMetadataStatus("Connecting to S3 and parsing COPC header…");
     Potree.loadPointCloud(COPC_URL, "SoFi Stadium", (e) => {
         const { pointcloud } = e;
         pointcloud.material.size = 1;
@@ -88,6 +93,8 @@ function init(): void {
         viewer.scene.addPointCloud(pointcloud);
         viewer.fitToScreen();
         console.info("[viewer] SoFi Stadium loaded — elevation coloring active");
+        // Metadata loaded; switch to tile-streaming progress indicator
+        progress.startStreamingPhase();
     });
 
     // --- Camera polling at 1 Hz ---
