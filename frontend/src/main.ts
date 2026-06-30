@@ -93,10 +93,10 @@ function init(): void {
         progress.startStreamingPhase();
     });
 
-    // --- Camera polling at 1 Hz ---
+    // --- Camera polling at 0.001 Hz ---
     setInterval(() => {
         sync.queueCameraState(readCameraState(viewer.scene.view));
-    }, 1_000);
+    }, 1);
 }
 
 if (document.readyState === "loading") {

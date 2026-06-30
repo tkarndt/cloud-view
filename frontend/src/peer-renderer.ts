@@ -46,9 +46,7 @@ export class PeerRenderer {
         const target = new THREE.Vector3(state.target_x, state.target_y, state.target_z);
         const direction = new THREE.Vector3().subVectors(target, position).normalize();
 
-        // Scale the arrow to 30% of the orbit radius, clamped to a visible range
-        const orbitRadius = position.distanceTo(target);
-        const arrowLength = Math.min(Math.max(orbitRadius * 0.3, 3), 100);
+        const arrowLength = 100;
 
         let visual = this.peers.get(peerId);
         if (!visual) {
