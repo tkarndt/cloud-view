@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ── Python backend ──────────────────────────────────────────────────────────
+  backend:
+    name: Backend (Python)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: uv sync --dev
+
+      - name: Check formatting (black)
+        run: uv run black --check src tests
+
+      - name: Lint (flake8)
+        run: uv run flake8 src tests
+
+      - name: Type-check (mypy)
+        run: uv run mypy src
+
+      - name: Unit & integration tests (pytest)
+        run: uv run pytest tests -v --tb=short
+
+  # ── TypeScript frontend ─────────────────────────────────────────────────────
+  frontend:
+    name: Frontend (TypeScript)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type-check (tsc)
+        run: npm run type-check
+
+      - name: Build
+        run: npm run build
+
+  # ── Docker smoke test ───────────────────────────────────────────────────────
+  docker:
+    name: Docker build
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build images
+        run: docker compose build
