@@ -13,3 +13,6 @@ Use python for the Real-time sync layer. Show me the implementation plan first.
       <anonymous> main.ts:109
   EptLoader.js:24:28
 6. in potree the view has the position and direction properties which are also used to update the peers visual. Using position and target as a data model is the wrong choice. Adapt all interfaces in backend and frontend to use position and direction instead
+7. change the arrow visualization to a frustum
+8. the frustum is not correctly rotated. The view direction is correct but the roll around the view axis is moving
+9. make the frustum a view cone instead

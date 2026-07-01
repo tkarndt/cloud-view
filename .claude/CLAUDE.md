@@ -11,6 +11,7 @@
 - Make sure to include a README.md with instructions for setting up the development environment, running tests, and starting the application.
 - Use docker compose for full stack development and for integration testing, if applicable.
 - Avoid suggesting multiple ways to do the same thing, instead suggest a single best practice way to do it.
+- Do not use abbreviations for variable names but write out the meaning
 
 ## When coding in python:
 - Always use pytest for unit and integration tests.
