@@ -124,6 +124,51 @@
         @keyframes cv-spin {
             to { transform: rotate(360deg); }
         }
+
+        /* ── Peer list overlay ───────────────────────────────────────────────── */
+        #peer-overlay {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 600;
+            display: none;         /* shown by JS when peers > 0 */
+            flex-direction: column;
+            gap: 8px;
+            background: rgba(8, 14, 24, 0.88);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 12px 16px;
+            font-family: system-ui, -apple-system, sans-serif;
+            font-size: 0.82rem;
+            color: #9aaabb;
+            backdrop-filter: blur(10px);
+            min-width: 180px;
+        }
+        #peer-count {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: #556677;
+        }
+        #peer-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .peer-list-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .peer-color-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
     </style>
 </head>
 <body>
@@ -144,6 +189,12 @@
                 Initial load may take 30–60 s depending on connection speed.
             </p>
         </div>
+    </div>
+
+    <!-- Peer list overlay: shown when at least one other peer is connected -->
+    <div id="peer-overlay">
+        <span id="peer-count"></span>
+        <ul id="peer-list"></ul>
     </div>
 
     <!-- Phase 2: compact pill during background tile streaming -->

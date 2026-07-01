@@ -16,3 +16,6 @@ Use python for the Real-time sync layer. Show me the implementation plan first.
 7. change the arrow visualization to a frustum
 8. the frustum is not correctly rotated. The view direction is correct but the roll around the view axis is moving
 9. make the frustum a view cone instead
+10. add an overlay of all other currently connected peers
+11. change the colors and color names to be pairs and append a number to any additional peer that joins when the number of fixed colors is exhausted
+12. move the color to the backend so each peer has a fixed color assigned

@@ -11,7 +11,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from cloud_view.hub import ConnectionHub
+from cloud_view.hub import PEER_COLOR_PALETTE, ConnectionHub
 from cloud_view.models import CameraState
 
 
@@ -48,14 +48,16 @@ async def test_connect_returns_non_empty_peer_id(hub: ConnectionHub, ws: AsyncMo
     assert peer_id
 
 
-async def test_connect_sends_welcome_message(hub: ConnectionHub, ws: AsyncMock) -> None:
-    """New peer immediately receives a welcome with its ID and an empty peer list."""
+async def test_connect_sends_welcome_with_color(hub: ConnectionHub, ws: AsyncMock) -> None:
+    """New peer immediately receives a welcome with its ID, color, name, and empty peers."""
     peer_id = await hub.connect(ws)
 
     ws.send_text.assert_called_once()
     data = json.loads(ws.send_text.call_args[0][0])
     assert data["type"] == "welcome"
     assert data["peer_id"] == peer_id
+    assert data["color"] == PEER_COLOR_PALETTE[0][0]
+    assert data["name"] == PEER_COLOR_PALETTE[0][1]
     assert data["peers"] == {}
 
 
@@ -66,6 +68,30 @@ async def test_connect_increments_connection_count(hub: ConnectionHub, ws: Async
     assert hub.connection_count == 1
     await hub.connect(ws2)
     assert hub.connection_count == 2
+
+
+async def test_two_peers_receive_different_colors(hub: ConnectionHub) -> None:
+    """Consecutive peers are assigned distinct colors from the palette."""
+    ws1, ws2 = AsyncMock(), AsyncMock()
+    await hub.connect(ws1)
+    await hub.connect(ws2)
+
+    welcome1 = json.loads(ws1.send_text.call_args[0][0])
+    welcome2 = json.loads(ws2.send_text.call_args[0][0])
+    assert welcome1["color"] != welcome2["color"]
+    assert welcome1["name"] != welcome2["name"]
+
+
+async def test_palette_cycles_with_numeric_suffix(hub: ConnectionHub) -> None:
+    """After all palette entries are used, colors repeat with a ' 2' suffix."""
+    websockets = [AsyncMock() for _ in range(len(PEER_COLOR_PALETTE) + 1)]
+    for ws in websockets:
+        await hub.connect(ws)
+
+    first_welcome = json.loads(websockets[0].send_text.call_args[0][0])
+    overflow_welcome = json.loads(websockets[-1].send_text.call_args[0][0])
+    assert overflow_welcome["color"] == first_welcome["color"]
+    assert overflow_welcome["name"] == first_welcome["name"] + " 2"
 
 
 async def test_new_joiner_receives_existing_peer_states(
@@ -80,7 +106,9 @@ async def test_new_joiner_receives_existing_peer_states(
 
     welcome = json.loads(ws2.send_text.call_args[0][0])
     assert peer1 in welcome["peers"]
-    assert welcome["peers"][peer1]["position_x"] == 100.0
+    assert welcome["peers"][peer1]["camera_state"]["position_x"] == 100.0
+    assert "color" in welcome["peers"][peer1]
+    assert "name" in welcome["peers"][peer1]
 
 
 async def test_camera_update_broadcasts_to_other_peers(
@@ -99,6 +127,8 @@ async def test_camera_update_broadcasts_to_other_peers(
     assert msg["type"] == "peer_update"
     assert msg["peer_id"] == peer1
     assert msg["data"]["position_x"] == 100.0
+    assert "color" in msg
+    assert "name" in msg
 
 
 async def test_camera_update_does_not_echo_to_sender(

@@ -9,14 +9,25 @@
 import type {
     CameraState,
     CameraUpdateMessage,
+    PeerInfo,
     PeerLeftMessage,
     PeerUpdateMessage,
     ServerMessage,
     WelcomeMessage,
 } from "./types.js";
 
-export type WelcomeHandler = (myPeerId: string, peers: Record<string, CameraState>) => void;
-export type PeerUpdateHandler = (peerId: string, state: CameraState) => void;
+export type WelcomeHandler = (
+    myPeerId: string,
+    myColor: string,
+    myName: string,
+    peers: Record<string, PeerInfo>,
+) => void;
+export type PeerUpdateHandler = (
+    peerId: string,
+    state: CameraState,
+    color: string,
+    name: string,
+) => void;
 export type PeerLeftHandler = (peerId: string) => void;
 
 const SEND_INTERVAL_MS = 1_000;
@@ -93,14 +104,14 @@ export class SyncClient {
     private handleMessage(msg: ServerMessage): void {
         switch (msg.type) {
             case "welcome": {
-                const { peer_id, peers } = msg as WelcomeMessage;
-                console.info("[sync] My peer_id:", peer_id);
-                this.onWelcome(peer_id, peers);
+                const { peer_id, color, name, peers } = msg as WelcomeMessage;
+                console.info("[sync] My peer_id:", peer_id, "color:", name);
+                this.onWelcome(peer_id, color, name, peers);
                 break;
             }
             case "peer_update": {
-                const { peer_id, data } = msg as PeerUpdateMessage;
-                this.onPeerUpdate(peer_id, data);
+                const { peer_id, data, color, name } = msg as PeerUpdateMessage;
+                this.onPeerUpdate(peer_id, data, color, name);
                 break;
             }
             case "peer_left": {

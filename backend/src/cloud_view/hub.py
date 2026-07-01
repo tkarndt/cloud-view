@@ -7,9 +7,19 @@ import logging
 import uuid
 from typing import Protocol, runtime_checkable
 
-from .models import CameraState, PeerLeftMessage, PeerUpdateMessage, WelcomeMessage
+from .models import CameraState, PeerInfo, PeerLeftMessage, PeerUpdateMessage, WelcomeMessage
 
 logger = logging.getLogger(__name__)
+
+# Palette cycled in order; when exhausted, names gain a numeric suffix ("red 2", etc.).
+PEER_COLOR_PALETTE: list[tuple[str, str]] = [
+    ("#ff4444", "red"),
+    ("#44cc44", "green"),
+    ("#4488ff", "blue"),
+    ("#ffcc00", "yellow"),
+    ("#ff44ff", "magenta"),
+    ("#00cccc", "cyan"),
+]
 
 
 @runtime_checkable
@@ -34,13 +44,15 @@ class ConnectionHub:
     """
 
     def __init__(self) -> None:
-        """Initialise with empty connection and camera-state registries."""
+        """Initialise with empty connection and state registries."""
         self._connections: dict[str, WebSocketLike] = {}
         self._camera_states: dict[str, CameraState] = {}
+        self._peer_colors: dict[str, tuple[str, str]] = {}
+        self._color_counter: int = 0
         self._lock = asyncio.Lock()
 
     async def connect(self, websocket: WebSocketLike) -> str:
-        """Register a new peer and send it the current state of all other peers.
+        """Register a new peer, assign it a color, and send it the current state of all peers.
 
         Args:
             websocket: The WebSocket connection to register.
@@ -50,12 +62,25 @@ class ConnectionHub:
         """
         peer_id = str(uuid.uuid4())
         async with self._lock:
+            color, name = self._next_color()
             self._connections[peer_id] = websocket
-            existing = dict(self._camera_states)
+            self._peer_colors[peer_id] = (color, name)
+            existing_states = dict(self._camera_states)
+            existing_colors = dict(self._peer_colors)
 
-        welcome = WelcomeMessage(peer_id=peer_id, peers=existing)
+        peers = {
+            pid: PeerInfo(
+                color=existing_colors[pid][0],
+                name=existing_colors[pid][1],
+                camera_state=state,
+            )
+            for pid, state in existing_states.items()
+        }
+        welcome = WelcomeMessage(peer_id=peer_id, color=color, name=name, peers=peers)
         await websocket.send_text(welcome.model_dump_json())
-        logger.info("Peer connected: %s (total: %d)", peer_id, len(self._connections))
+        logger.info(
+            "Peer connected: %s color=%s (total: %d)", peer_id, name, len(self._connections)
+        )
         return peer_id
 
     async def disconnect(self, peer_id: str) -> None:
@@ -67,6 +92,7 @@ class ConnectionHub:
         async with self._lock:
             self._connections.pop(peer_id, None)
             self._camera_states.pop(peer_id, None)
+            self._peer_colors.pop(peer_id, None)
 
         msg = PeerLeftMessage(peer_id=peer_id)
         await self._broadcast(msg.model_dump_json(), exclude=peer_id)
@@ -81,9 +107,10 @@ class ConnectionHub:
         """
         async with self._lock:
             self._camera_states[peer_id] = state
+            color, name = self._peer_colors[peer_id]
             targets = {pid: ws for pid, ws in self._connections.items() if pid != peer_id}
 
-        msg = PeerUpdateMessage(peer_id=peer_id, data=state)
+        msg = PeerUpdateMessage(peer_id=peer_id, color=color, name=name, data=state)
         serialized = msg.model_dump_json()
 
         results = await asyncio.gather(
@@ -100,6 +127,18 @@ class ConnectionHub:
     def connection_count(self) -> int:
         """Current number of connected peers."""
         return len(self._connections)
+
+    def _next_color(self) -> tuple[str, str]:
+        """Assign the next color from the palette, cycling with a numeric suffix.
+
+        Must be called while holding self._lock.
+        """
+        index = self._color_counter % len(PEER_COLOR_PALETTE)
+        cycle = self._color_counter // len(PEER_COLOR_PALETTE)
+        hex_color, base_name = PEER_COLOR_PALETTE[index]
+        name = base_name if cycle == 0 else f"{base_name} {cycle + 1}"
+        self._color_counter += 1
+        return hex_color, name
 
     async def _broadcast(self, message: str, exclude: str | None = None) -> None:
         """Send a message to all connected peers, optionally excluding one."""

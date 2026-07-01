@@ -8,20 +8,31 @@ export interface CameraState {
     direction_z: number;
 }
 
+/** Color assignment and last known camera state for a peer. */
+export interface PeerInfo {
+    color: string;
+    name: string;
+    camera_state: CameraState;
+}
+
 /** Union of all message types the server can send. */
 export type ServerMessage = WelcomeMessage | PeerUpdateMessage | PeerLeftMessage;
 
-/** Sent once on connect: the client's own peer_id and every current peer's camera state. */
+/** Sent once on connect: the client's own peer_id, color, name, and every current peer's state. */
 export interface WelcomeMessage {
     type: "welcome";
     peer_id: string;
-    peers: Record<string, CameraState>;
+    color: string;
+    name: string;
+    peers: Record<string, PeerInfo>;
 }
 
 /** Sent whenever another peer moves their camera. */
 export interface PeerUpdateMessage {
     type: "peer_update";
     peer_id: string;
+    color: string;
+    name: string;
     data: CameraState;
 }
 

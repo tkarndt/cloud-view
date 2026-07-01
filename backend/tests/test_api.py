@@ -40,6 +40,8 @@ def test_websocket_welcome_on_connect() -> None:
 
     assert data["type"] == "welcome"
     assert "peer_id" in data
+    assert "color" in data
+    assert "name" in data
     assert data["peers"] == {}
 
 
@@ -70,7 +72,9 @@ def test_second_joiner_receives_existing_peers() -> None:
                 welcome2 = json.loads(ws2.receive_text())
 
     assert peer1_id in welcome2["peers"]
-    assert welcome2["peers"][peer1_id]["position_x"] == 1.0
+    assert welcome2["peers"][peer1_id]["camera_state"]["position_x"] == 1.0
+    assert "color" in welcome2["peers"][peer1_id]
+    assert "name" in welcome2["peers"][peer1_id]
 
 
 def test_camera_update_relayed_to_second_client() -> None:
@@ -104,6 +108,8 @@ def test_camera_update_relayed_to_second_client() -> None:
     assert msg["type"] == "peer_update"
     assert msg["peer_id"] == peer1_id
     assert msg["data"]["position_x"] == 10.0
+    assert "color" in msg
+    assert "name" in msg
 
 
 def test_invalid_message_does_not_close_connection() -> None:

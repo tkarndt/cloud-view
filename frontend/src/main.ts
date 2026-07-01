@@ -47,19 +47,24 @@ function init(): void {
 
     // Cast the overlay scene to THREE.Scene so PeerRenderer can type-check it
     const overlayScene = viewer.scene.scene as THREE.Scene;
-    const peerRenderer = new PeerRenderer(overlayScene);
+    const peerRenderer = new PeerRenderer(
+        overlayScene,
+        document.getElementById("peer-overlay")!,
+        document.getElementById("peer-count")!,
+        document.getElementById("peer-list")!,
+    );
 
     // --- WebSocket sync ---
     const wsUrl = `ws://${window.location.host}/ws`;
     const sync = new SyncClient(
         wsUrl,
-        (_myId, peers) => {
+        (_myId, _myColor, _myName, peers) => {
             // Populate visuals for peers already in the session when we join
-            for (const [id, state] of Object.entries(peers)) {
-                peerRenderer.updatePeer(id, state);
+            for (const [id, peerInfo] of Object.entries(peers)) {
+                peerRenderer.updatePeer(id, peerInfo.camera_state, peerInfo.color, peerInfo.name);
             }
         },
-        (id, state) => peerRenderer.updatePeer(id, state),
+        (id, state, color, name) => peerRenderer.updatePeer(id, state, color, name),
         (id) => peerRenderer.removePeer(id),
     );
     sync.connect();

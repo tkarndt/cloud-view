@@ -1,6 +1,9 @@
 /**
  * Renders a wireframe view cone for each connected peer in Potree's overlay
- * Three.js scene.
+ * Three.js scene, and maintains a DOM overlay listing all connected peers.
+ *
+ * Colors and names are assigned by the backend and arrive with each message,
+ * so all clients display the same color for the same peer.
  *
  * Geometry is built in local space pointing along +Z and rotated to match the
  * peer's reported view direction on every update.
@@ -8,15 +11,6 @@
 
 import * as THREE from "three";
 import type { CameraState } from "./types.js";
-
-const PEER_COLORS: number[] = [
-    0xff4444, // red
-    0x44cc44, // green
-    0x4488ff, // blue
-    0xffcc00, // yellow
-    0xff44ff, // magenta
-    0x00cccc, // cyan
-];
 
 /** Matches viewer.setFOV(60) in main.ts. */
 const VERTICAL_FOV_RADIANS = Math.PI / 3;
@@ -36,25 +30,34 @@ interface PeerVisual {
     group: THREE.Group;
     cone: THREE.LineSegments;
     eyeSphere: THREE.Mesh;
+    listItem: HTMLLIElement;
 }
 
 export class PeerRenderer {
     private readonly peers = new Map<string, PeerVisual>();
-    private colorCounter = 0;
 
     /**
-     * @param scene The THREE.Scene that Potree uses for overlays
-     *              (typically `viewer.scene.scene`).
+     * @param scene             The THREE.Scene that Potree uses for overlays.
+     * @param overlayElement    The `#peer-overlay` container (shown/hidden).
+     * @param peerCountElement  The element whose text shows the peer count.
+     * @param peerListElement   The `<ul>` that receives one `<li>` per peer.
      */
-    constructor(private readonly scene: THREE.Scene) {}
+    constructor(
+        private readonly scene: THREE.Scene,
+        private readonly overlayElement: HTMLElement,
+        private readonly peerCountElement: HTMLElement,
+        private readonly peerListElement: HTMLElement,
+    ) {}
 
     /**
-     * Create or update the view-cone visual for a peer.
+     * Create or update the view-cone visual and overlay entry for a peer.
      *
      * @param peerId Stable peer identifier.
      * @param state  Current camera position and normalised view direction.
+     * @param color  CSS hex color assigned by the backend, e.g. `"#ff4444"`.
+     * @param name   Human-readable color name assigned by the backend.
      */
-    updatePeer(peerId: string, state: CameraState): void {
+    updatePeer(peerId: string, state: CameraState, color: string, name: string): void {
         const position = new THREE.Vector3(state.position_x, state.position_y, state.position_z);
         const direction = new THREE.Vector3(
             state.direction_x,
@@ -64,10 +67,11 @@ export class PeerRenderer {
 
         let visual = this.peers.get(peerId);
         if (!visual) {
-            visual = this.createVisual(peerId);
+            visual = this.createVisual(peerId, color, name);
             this.peers.set(peerId, visual);
             this.scene.add(visual.group);
-            console.debug(`[peers] Created view cone for peer ${peerId.slice(0, 8)}`);
+            this.refreshOverlay();
+            console.debug(`[peers] Created view cone for peer ${peerId.slice(0, 8)} (${name})`);
         }
 
         visual.group.position.copy(position);
@@ -75,7 +79,7 @@ export class PeerRenderer {
     }
 
     /**
-     * Remove the visual for a peer that has disconnected.
+     * Remove the visual and overlay entry for a peer that has disconnected.
      *
      * @param peerId The peer to remove.
      */
@@ -83,27 +87,55 @@ export class PeerRenderer {
         const visual = this.peers.get(peerId);
         if (visual) {
             this.scene.remove(visual.group);
+            visual.listItem.remove();
             this.peers.delete(peerId);
+            this.refreshOverlay();
             console.debug(`[peers] Removed view cone for peer ${peerId.slice(0, 8)}`);
         }
     }
 
-    private createVisual(peerId: string): PeerVisual {
-        const color = PEER_COLORS[this.colorCounter % PEER_COLORS.length]!;
-        this.colorCounter++;
+    private createVisual(peerId: string, color: string, name: string): PeerVisual {
+        const threeColor = parseInt(color.slice(1), 16);
 
         const group = new THREE.Group();
         group.name = `peer-${peerId.slice(0, 8)}`;
 
         const eyeSphere = new THREE.Mesh(
             new THREE.SphereGeometry(EYE_SPHERE_RADIUS, 8, 8),
-            new THREE.MeshBasicMaterial({ color }),
+            new THREE.MeshBasicMaterial({ color: threeColor }),
         );
         group.add(eyeSphere);
 
-        group.add(buildConeLines(color));
+        const cone = buildConeLines(threeColor);
+        group.add(cone);
 
-        return { group, cone: group.children[1] as THREE.LineSegments, eyeSphere };
+        const listItem = this.createListItem(peerId, color, name);
+
+        return { group, cone, eyeSphere, listItem };
+    }
+
+    private createListItem(peerId: string, color: string, name: string): HTMLLIElement {
+        const listItem = document.createElement("li");
+        listItem.className = "peer-list-item";
+
+        const dot = document.createElement("span");
+        dot.className = "peer-color-dot";
+        dot.style.background = color;
+
+        const label = document.createElement("span");
+        label.textContent = `${name} · ${peerId.slice(0, 8)}`;
+
+        listItem.append(dot, label);
+        this.peerListElement.append(listItem);
+        return listItem;
+    }
+
+    /** Show/hide the overlay and update the peer count text. */
+    private refreshOverlay(): void {
+        const count = this.peers.size;
+        this.overlayElement.style.display = count > 0 ? "flex" : "none";
+        this.peerCountElement.textContent =
+            count === 1 ? "1 peer connected" : `${count} peers connected`;
     }
 
     /**

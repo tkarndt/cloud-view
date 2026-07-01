@@ -18,6 +18,14 @@ class CameraState(BaseModel):
     direction_z: float
 
 
+class PeerInfo(BaseModel):
+    """Color assignment and last known camera state for a peer."""
+
+    color: str
+    name: str
+    camera_state: CameraState
+
+
 class CameraUpdateMessage(BaseModel):
     """Sent by a client to report its current camera state."""
 
@@ -26,11 +34,13 @@ class CameraUpdateMessage(BaseModel):
 
 
 class WelcomeMessage(BaseModel):
-    """Sent to a new client: its assigned peer_id and all current peer states."""
+    """Sent to a new client: its assigned peer_id, color, name, and all current peer states."""
 
     type: Literal["welcome"] = "welcome"
     peer_id: str
-    peers: dict[str, CameraState]
+    color: str
+    name: str
+    peers: dict[str, PeerInfo]
 
 
 class PeerUpdateMessage(BaseModel):
@@ -38,6 +48,8 @@ class PeerUpdateMessage(BaseModel):
 
     type: Literal["peer_update"] = "peer_update"
     peer_id: str
+    color: str
+    name: str
     data: CameraState
 
 

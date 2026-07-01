@@ -2,7 +2,7 @@
 
 Collaborative real-time point cloud viewer. Multiple browser tabs load the SoFi Stadium COPC
 point cloud and share their camera position and view direction — each tab shows where the
-others are looking as a coloured 3D arrow in the scene.
+others are looking as a coloured view cone in the scene.
 
 ## Stack
 
@@ -10,7 +10,8 @@ others are looking as a coloured 3D arrow in the scene.
 |---|---|
 | Point cloud viewer | [Potree](https://github.com/potree/potree) (develop branch, COPC support) |
 | Real-time sync | Python / FastAPI WebSocket hub |
-| Peer presence | Three.js `ArrowHelper` in Potree's overlay scene |
+| Peer presence | Three.js wireframe view cone per peer in Potree's overlay scene |
+| Color assignment | Backend-authoritative; all clients display the same color per peer |
 | Build / serve | Vite (TypeScript), nginx, Docker Compose |
 
 ## Prerequisites
@@ -131,32 +132,17 @@ browser tab(s)
 
 ## Approach
 
-**Scoping.** The task breaks cleanly into three independent pieces: point cloud loading, sync
-transport, and peer visualisation. I built and verified each layer before wiring them together.
+### General
+This repository was written using Claude Code (Sonnet 4.6), reviewed and refined both manually and again under the usage of Claude.
 
-**Point cloud viewer.** Potree's develop branch is the only viewer with reliable COPC+LOD
-support for a 2 GB file in the browser. The `activeAttributeName = "elevation"` is set in the
-load callback so elevation coloring is the default — not a menu action. Potree is built from
-source in a Docker stage (the develop branch often commits pre-built files, so the build step
-is fast or a no-op).
+### Following the history
 
-**Real-time sync (Python/FastAPI).** `ConnectionHub` holds the state in a plain dict protected
-by `asyncio.Lock`.  The lock is held only while reading/writing dicts; the actual WebSocket
-sends happen concurrently via `asyncio.gather`.  `ConnectionHub` depends on a `WebSocketLike`
-Protocol rather than FastAPI's `WebSocket` directly, so unit tests inject lightweight
-`AsyncMock` doubles without any monkey-patching.
+In the branch initial_project_setup you find the commit history of this approach.
 
-**Peer presence.** `PeerRenderer` keeps one `THREE.ArrowHelper` + eye sphere per peer in
-Potree's overlay scene (`viewer.scene.scene`). Arrow length is 30% of the camera-to-target
-distance (clamped), so it scales naturally as the user zooms in and out. Three.js objects from
-our npm import are compatible with Potree's bundled Three.js because Three.js uses boolean
-flags (`isObject3D`, `isMesh`) for type checks — not `instanceof`.
+The first commit after the init adds general settings for Claude in the CLAUDE.md which are refined as the history progresses as well.
 
-**What I used AI for.** Claude Code generated the scaffolding, protocol types, and boilerplate.
-I specified the architecture, WebSocket protocol, and the Potree orbit-math formula
-(`pivot = position − [r·sin(yaw)·cos(pitch), r·sin(pitch), r·cos(yaw)·cos(pitch)]`), and
-reviewed/corrected the generated code before committing.
+The second commit adds the .claude/promt_log.md to the repository to allow comprehending the evolution with each commit. In addition to that the second commit includes the first raw unreviewed version suggested by Claude. This version served as a starting point and has been reviewd and refined in the following commits.
 
-**What I'd improve next.** Peer name labels (Potree Annotation API), stable colours across
-rejoin (hash peer_id to colour index), and a 2–4 Hz send rate for a more live feel while
-keeping the 1 Hz fallback for slow connections.
+Each of the following commits have one or more prompts that contributed to the code in that commit. The commits may also include any manual edits.
+
+Ultimately once the review process has been finished (still including flaws that would need to be addressed but happy enough to call it a first version) the commits are squashed and merged to main.
